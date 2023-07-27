@@ -2,7 +2,47 @@ const Employee = require("../models/employee");
 
 const findAll = async (req, res) => {
   try {
-    const employees = await Employee.find({});
+    // Sort employees by STATUS_YEAR in descending order
+    const sortedEmployees = await Employee.aggregate([
+      {
+        $sort: { STATUS_YEAR: -1 }
+      }
+    ]);
+
+    // Group employees by EmployeeID and select the first (highest STATUS_YEAR) document for each EmployeeID
+    const employees = await Employee.aggregate([
+      {
+        $sort: { STATUS_YEAR: -1 } // Sort by STATUS_YEAR in descending order
+      },
+      {
+        $group: {
+          _id: "$EmployeeID",
+          employee: { $first: "$$ROOT" }
+        }
+      },
+      {
+        $replaceRoot: { newRoot: "$employee" } // Replace the document with the original employee document
+      }
+    ]);
+
+    return res.json(employees);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Error fetching employees" });
+  }
+};
+
+const findAllOf = async (req, res) => {
+  try {
+    const employeeId = req.params.id; // Get the employee ID from the route parameter
+
+    // Find all employees with the specified EmployeeID
+    const employees = await Employee.find({ EmployeeID: employeeId });
+
+    if (employees.length === 0) {
+      return res.status(404).json({ error: "No employees found with the specified EmployeeID" });
+    }
+
     return res.json(employees);
   } catch (err) {
     console.error(err);
@@ -12,8 +52,12 @@ const findAll = async (req, res) => {
 
 const findById = async (req, res) => {
   try {
-    const employeeId = req.params.employeeId;
-    const employee = await Employee.findOne({ id: employeeId });
+    const employeeId = req.params.employeeId; // Assuming the employee ID is provided as a route parameter
+
+    // Sort employees by STATUS_YEAR in descending order and select only the first result
+    const employee = await Employee.findOne({ id: employeeId })
+      .sort({ STATUS_YEAR: -1 })
+      .limit(1);
 
     if (!employee) {
       return res.status(404).json({ error: "Employee not found" });
@@ -53,7 +97,7 @@ const deactivate = async (req, res) => {
     const employeeId = req.params.employeeId;
     const employee = await Employee.findOneAndUpdate(
       { id: employeeId },
-      { STATUS: "INACTIVE"},
+      { STATUS: "INACTIVE" },
       { new: true }
     );
 
@@ -68,9 +112,9 @@ const deactivate = async (req, res) => {
   }
 };
 
-
 module.exports = {
   findAll,
+  findAllOf,
   findById,
   update,
   deactivate,
