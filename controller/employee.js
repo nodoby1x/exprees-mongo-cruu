@@ -75,7 +75,7 @@ const update = async (req, res) => {
     const updatedData = req.body;
 
     const employee = await Employee.findOneAndUpdate(
-      { EmployeeID: employeeId },
+      { _id: employeeId },
       updatedData,
       { new: true }
     );
