@@ -52,10 +52,9 @@ const findAllOf = async (req, res) => {
 
 const findById = async (req, res) => {
   try {
-    const employeeId = req.params.employeeId; // Assuming the employee ID is provided as a route parameter
-
+    const employeeId = req.params.id; // Assuming the employee ID is provided as a route parameter
     // Sort employees by STATUS_YEAR in descending order and select only the first result
-    const employee = await Employee.findOne({ id: employeeId })
+    const employee = await Employee.findOne({ EmployeeID: employeeId })
       .sort({ STATUS_YEAR: -1 })
       .limit(1);
 
@@ -72,11 +71,11 @@ const findById = async (req, res) => {
 
 const update = async (req, res) => {
   try {
-    const employeeId = req.params.employeeId;
+    const employeeId = req.params.id;
     const updatedData = req.body;
 
     const employee = await Employee.findOneAndUpdate(
-      { id: employeeId },
+      { EmployeeID: employeeId },
       updatedData,
       { new: true }
     );
@@ -94,9 +93,9 @@ const update = async (req, res) => {
 
 const deactivate = async (req, res) => {
   try {
-    const employeeId = req.params.employeeId;
+    const employeeId = req.params.id;
     const employee = await Employee.findOneAndUpdate(
-      { id: employeeId },
+      { EmployeeID: employeeId },
       { STATUS: "INACTIVE" },
       { new: true }
     );
